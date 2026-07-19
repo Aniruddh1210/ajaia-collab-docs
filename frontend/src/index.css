@@ -1,0 +1,48 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-gray-100 text-gray-900 antialiased;
+  }
+}
+
+/* TipTap editor content styling (ProseMirror) */
+.ProseMirror {
+  @apply outline-none min-h-[60vh];
+}
+.ProseMirror p {
+  @apply my-2 leading-relaxed;
+}
+.ProseMirror h1 {
+  @apply text-3xl font-bold mt-6 mb-3;
+}
+.ProseMirror h2 {
+  @apply text-2xl font-semibold mt-5 mb-2;
+}
+.ProseMirror h3 {
+  @apply text-xl font-semibold mt-4 mb-2;
+}
+.ProseMirror ul {
+  @apply list-disc pl-6 my-2;
+}
+.ProseMirror ol {
+  @apply list-decimal pl-6 my-2;
+}
+.ProseMirror blockquote {
+  @apply border-l-4 border-gray-300 pl-4 italic text-gray-600 my-3;
+}
+.ProseMirror code {
+  @apply bg-gray-100 rounded px-1 py-0.5 text-sm font-mono;
+}
+.ProseMirror pre {
+  @apply bg-gray-900 text-gray-100 rounded-md p-3 my-3 overflow-x-auto;
+}
+.ProseMirror pre code {
+  @apply bg-transparent text-inherit p-0;
+}
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  @apply text-gray-400 float-left h-0 pointer-events-none;
+}
