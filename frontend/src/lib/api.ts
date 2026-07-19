@@ -1,5 +1,7 @@
 import { supabase } from "./supabase";
 import type {
+  AIAction,
+  AIAssistResult,
   DocumentDetail,
   DocumentSummary,
   ImportResult,
@@ -93,4 +95,10 @@ export const api = {
     form.append("file", file);
     return request<ImportResult>("/api/import", { method: "POST", body: form });
   },
+
+  aiAssist: (action: AIAction, text: string, instruction?: string) =>
+    request<AIAssistResult>("/api/ai/assist", {
+      method: "POST",
+      body: JSON.stringify({ action, text, instruction }),
+    }),
 };

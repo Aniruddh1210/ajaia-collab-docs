@@ -91,8 +91,26 @@ bypassed by the client.
 Edits debounce for 800ms, then `PATCH` the document. The pending payload and
 timer are held in refs to avoid stale-closure bugs, and a failed save re-queues
 its payload so the next change retries it. A `beforeunload` handler flushes
-in-flight changes when the tab closes. Concurrent edits are last-write-wins — a
-deliberate cut (see the real-time note in the README).
+in-flight changes when the tab closes. Persisted content is last-write-wins;
+conflict-free merge is the deliberate cut (see real-time collaboration below).
+
+## Real-time collaboration
+
+A Supabase Realtime channel per document (`doc:<id>`) carries three things over
+broadcast + presence — no polling:
+
+- **Live content/title sync:** edits are throttled (~200ms) and pushed to peers,
+  who apply them unless they're actively typing (so a caret is never yanked).
+- **Presence:** each client `track`s its identity, rendering "who's viewing now"
+  avatars; leaving clears the avatar and any stale caret.
+- **Remote cursors:** selections are broadcast (~80ms throttle) and drawn as
+  colored carets via a small ProseMirror decoration plugin.
+
+This is the "collaboration indicators" stretch item. It layers on top of the
+REST autosave (Realtime is the live channel; the backend is the source of
+truth). The remaining gap is conflict resolution: two people editing the *same
+region* simultaneously still resolve last-write-wins on persist — a CRDT/OT
+layer (e.g. Yjs) is the next step.
 
 ## Frontend structure
 
@@ -109,14 +127,15 @@ the editor; Tailwind provides a clean, Docs-like layout.
 3. **File import and sharing UX** — the two other required surfaces.
 4. **Polish and error handling** — toasts, empty/loading states, 404 page,
    validation.
-5. **One stretch feature** — Markdown/PDF export, because it's cheap and
-   demoable.
+5. **Stretch features, cheapest-first** — Markdown/PDF export, role-based
+   sharing, then real-time collaboration indicators (presence, live cursors,
+   live sync) and AI writing assist.
 
 ## What I deprioritized and why
 
-- **Real-time co-editing:** the single biggest effort sink; a convincing version
-  needs CRDT/OT and websocket infrastructure that would consume the whole
-  timebox and still be fragile. Sharing and permissions deliver most of the
-  "collaborative" value.
+- **Conflict-free co-editing (CRDT/OT):** real-time presence, cursors, and live
+  content sync are shipped, but a conflict-free merge layer is the single biggest
+  effort sink — it needs CRDT/OT machinery that would consume the whole timebox
+  and still be fragile. Last-write-wins on persist is an acceptable interim.
 - **Comments, folders, search, org roles:** breadth that would dilute depth. The
   assignment explicitly rewards deliberate scope cuts.

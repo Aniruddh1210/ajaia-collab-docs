@@ -5,6 +5,7 @@ import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
 import type { JSONContent } from "@tiptap/react";
 import Toolbar from "./Toolbar";
+import AiAssistant from "./AiAssistant";
 import { RemoteCursors, setRemoteCursors } from "./RemoteCursors";
 import type { RemoteCursor } from "../lib/collab";
 
@@ -75,7 +76,9 @@ export default function Editor({
 
   return (
     <div>
-      {editable && <Toolbar editor={editor} />}
+      {editable && (
+        <Toolbar editor={editor} right={<AiAssistant editor={editor} />} />
+      )}
       <div className="px-8 py-6">
         <EditorContent editor={editor} />
       </div>

@@ -12,7 +12,7 @@
 | Architecture note | [ARCHITECTURE.md](./ARCHITECTURE.md) |
 | AI workflow note | [AI_WORKFLOW.md](./AI_WORKFLOW.md) |
 | Build plan (phased) | [PLAN.md](./PLAN.md) |
-| Automated tests | `backend/tests/` (15 pytest cases) |
+| Automated tests | `backend/tests/` (24 pytest cases) |
 | Database migration | `backend/migrations/001_init.sql` |
 | Deployment config | `backend/render.yaml`, `backend/Dockerfile`, `frontend/vercel.json` |
 
@@ -55,15 +55,23 @@ share with `reviewer2@ajaiadocs.app`. In an incognito window, sign in as
   read-only editor with a "View only" badge
 - Access control enforced in the backend (owner-only delete, editor-can-edit,
   viewer-read-only, 404 for non-shared docs) — covered by tests
+- **Real-time collaboration** via Supabase Realtime (broadcast + presence): live
+  content/title sync between people in the same document, presence avatars of who
+  else is viewing, and live remote cursors/selections — no polling
+- **AI writing assist:** signed-in users can run fixed AI actions over selected
+  text (server-side Gemini key), so no reviewer key is required
 - Export to Markdown and print/Save-as-PDF
 - Error handling: toasts, empty/loading states, no-access page, network-failure
   save retry
 
 ## What's partial or incomplete
 
-- **Concurrent editing is last-write-wins.** There's no operational transform or
-  CRDT, so two people editing the same document simultaneously can overwrite each
-  other. Sharing and permissions are complete; live co-editing is not.
+- **Concurrent editing has no conflict resolution (last-write-wins on persist).**
+  Real-time presence, cursors, and live content sync are shipped, but there's no
+  operational transform or CRDT — so if two editors change the *same region* at
+  once, the last save wins and the other's edit to that region can be lost.
+  Sharing, permissions, presence, and live sync are complete; conflict-free
+  merge is not.
 - **Sharing requires the recipient to have signed in once** (their profile must
   exist before they can be found by email). Surfaced clearly in the share dialog.
 - **No email notifications** when a document is shared — it simply appears in the
@@ -73,9 +81,9 @@ share with `reviewer2@ajaiadocs.app`. In an incognito window, sign in as
 
 ## What I'd build next with another 2–4 hours
 
-1. **Real-time presence + soft-locking:** a Supabase Realtime channel per
-   document showing who else is viewing, plus a "someone else is editing" warning
-   to mitigate last-write-wins before committing to full CRDT.
+1. **Conflict-free co-editing (CRDT):** presence and live sync already ship;
+   the next step is a CRDT (e.g. Yjs) or soft-locking so simultaneous edits to
+   the same region merge instead of last-write-wins.
 2. **Document version history:** snapshot on significant saves, with a
    list-and-restore UI (schema already isolates content cleanly).
 3. **Comments / suggestion mode** anchored to text ranges.

@@ -7,7 +7,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import get_settings
 from app.db import Base, engine
-from app.routers import documents, imports, shares
+from app.routers import ai, documents, imports, shares
 
 logger = logging.getLogger("ajaia")
 settings = get_settings()
@@ -39,6 +39,7 @@ app.add_middleware(
 app.include_router(documents.router)
 app.include_router(shares.router)
 app.include_router(imports.router)
+app.include_router(ai.router)
 
 
 @app.get("/healthz", tags=["health"])

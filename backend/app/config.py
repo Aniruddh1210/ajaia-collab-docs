@@ -29,6 +29,13 @@ class Settings(BaseSettings):
     # Max upload size for imported files, in bytes (5 MB).
     max_upload_bytes: int = 5 * 1024 * 1024
 
+    # Gemini writing assistant. Leave the key empty to disable AI features
+    # (the /api/ai endpoint then returns 503 and the UI hides the button).
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-3-flash-preview"
+    gemini_max_output_tokens: int = 2048
+    gemini_timeout_seconds: float = 45.0
+
     @property
     def origins_list(self) -> list[str]:
         return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]

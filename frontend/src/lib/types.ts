@@ -26,3 +26,19 @@ export interface ImportResult {
   title: string;
   html: string;
 }
+
+export type AIAction =
+  | "improve"
+  | "fix"
+  | "shorten"
+  | "lengthen"
+  | "professional"
+  | "casual"
+  | "custom"
+  | "summarize"
+  | "continue";
+
+export interface AIAssistResult {
+  action: AIAction;
+  result: string;
+}

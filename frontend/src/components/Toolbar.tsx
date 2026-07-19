@@ -1,7 +1,9 @@
+import type { ReactNode } from "react";
 import type { Editor } from "@tiptap/react";
 
 interface Props {
   editor: Editor;
+  right?: ReactNode;
 }
 
 interface Btn {
@@ -11,7 +13,7 @@ interface Btn {
   run: () => void;
 }
 
-export default function Toolbar({ editor }: Props) {
+export default function Toolbar({ editor, right }: Props) {
   const buttons: (Btn | "divider")[] = [
     {
       label: "B",
@@ -100,6 +102,7 @@ export default function Toolbar({ editor }: Props) {
           </button>
         )
       )}
+      {right && <div className="ml-auto">{right}</div>}
     </div>
   );
 }

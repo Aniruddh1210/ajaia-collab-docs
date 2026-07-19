@@ -30,6 +30,16 @@ persistence.
 - **Sharing:** share a document with another user by email as **viewer**
   (read-only) or **editor** (can edit); owned vs. shared documents are visually
   separated on the dashboard
+- **Real-time collaboration:** Supabase Realtime keeps people in the same
+  document in sync — live content/title updates, presence avatars of who's
+  viewing, and live remote cursors (no polling)
+- **AI writing assist (Gemini):** an **✨ AI** menu in the editor toolbar. Over a
+  text selection: *Improve writing, Fix spelling & grammar, Make shorter/longer,
+  Professional/Casual tone,* or a free-form *Custom instruction*. Over the whole
+  document: *Summarize* (inserts a summary at the top) and *Continue writing*
+  (appends). Every result opens a preview with **Accept / Discard / Regenerate**,
+  so nothing changes the document until you approve it. The Gemini key lives only
+  on the backend, so reviewers need no key of their own.
 - **Export:** download any document as Markdown, or print/save as PDF
 
 ### Supported upload types
@@ -111,6 +121,13 @@ uvicorn app.main:app --reload
 DATABASE_URL=postgresql+asyncpg://postgres:PASSWORD@db.PROJECT.supabase.co:5432/postgres
 SUPABASE_JWT_SECRET=your-jwt-secret
 ALLOWED_ORIGINS=http://localhost:5173
+
+# Optional — enables the AI writing assistant. Get a key from Google AI Studio
+# (https://aistudio.google.com/apikey). Leave it unset to disable AI features;
+# the rest of the app works unchanged and the ✨ AI menu simply returns a
+# "not configured" message.
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-3-flash-preview
 ```
 
 > To run the backend without Supabase (SQLite, tables auto-created), just leave
@@ -189,9 +206,9 @@ The live deployment uses **Render** (backend) + **GitHub Pages** (frontend):
 To stay within the timebox, the following were intentionally **not** built (see
 [SUBMISSION.md](./SUBMISSION.md) for what's next):
 
-- Real-time collaborative editing (CRDT/OT) — highest complexity, lowest demo
-  value in the timebox. Sharing + access control is fully working; concurrent
-  edits are last-write-wins.
+- Conflict-free co-editing (CRDT/OT) — real-time presence, live cursors, and
+  live content sync are shipped, but simultaneous edits to the *same region* are
+  last-write-wins on save; a CRDT/OT layer was the deliberate cut.
 - Comments / suggestion mode
 - Folders, search, and document organization
 - Org/team-level permissions beyond per-document viewer/editor

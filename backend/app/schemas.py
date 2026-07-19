@@ -47,6 +47,30 @@ class DocumentDetail(DocumentSummary):
     created_at: datetime
 
 
+AIAction = Literal[
+    "improve", "fix", "shorten", "lengthen", "professional", "casual",
+    "custom", "summarize", "continue",
+]
+
+
+class AIAssistRequest(BaseModel):
+    action: AIAction
+    text: str = Field(min_length=1, max_length=50_000)
+    instruction: str | None = Field(default=None, max_length=500)
+
+    @field_validator("text")
+    @classmethod
+    def text_not_blank(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("text must not be blank")
+        return v
+
+
+class AIAssistResponse(BaseModel):
+    action: str
+    result: str
+
+
 class ShareCreate(BaseModel):
     email: EmailStr
     role: Role = "editor"
