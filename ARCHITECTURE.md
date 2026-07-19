@@ -91,26 +91,33 @@ bypassed by the client.
 Edits debounce for 800ms, then `PATCH` the document. The pending payload and
 timer are held in refs to avoid stale-closure bugs, and a failed save re-queues
 its payload so the next change retries it. A `beforeunload` handler flushes
-in-flight changes when the tab closes. Persisted content is last-write-wins;
-conflict-free merge is the deliberate cut (see real-time collaboration below).
+in-flight changes when the tab closes. The autosave is the durable path;
+in-session convergence between concurrent editors is handled by the CRDT below.
 
-## Real-time collaboration
+## Real-time collaboration (CRDT)
 
-A Supabase Realtime channel per document (`doc:<id>`) carries three things over
-broadcast + presence — no polling:
+The editor is backed by **Yjs**, a CRDT. Instead of broadcasting document
+snapshots (which can't merge two people editing the same spot), each keystroke is
+a small conflict-free operation. This is the difference between "collaboration
+indicators" and *actual* concurrent editing: two people can type in the same
+paragraph at the same time and both edits survive, converging to the same result
+on every screen.
 
-- **Live content/title sync:** edits are throttled (~200ms) and pushed to peers,
-  who apply them unless they're actively typing (so a caret is never yanked).
-- **Presence:** each client `track`s its identity, rendering "who's viewing now"
-  avatars; leaving clears the avatar and any stale caret.
-- **Remote cursors:** selections are broadcast (~80ms throttle) and drawn as
-  colored carets via a small ProseMirror decoration plugin.
-
-This is the "collaboration indicators" stretch item. It layers on top of the
-REST autosave (Realtime is the live channel; the backend is the source of
-truth). The remaining gap is conflict resolution: two people editing the *same
-region* simultaneously still resolve last-write-wins on persist — a CRDT/OT
-layer (e.g. Yjs) is the next step.
+- **TipTap `Collaboration` + `CollaborationCaret`** bind the editor to a shared
+  `Y.Doc` and render each peer's live caret/selection with their name and colour
+  (via Yjs "awareness"); StarterKit's history is disabled so Yjs owns undo/redo.
+- **Transport — a custom `SupabaseYProvider`** (`frontend/src/lib/yprovider.ts`):
+  a ~90-line provider that ships Yjs document updates and awareness over the
+  Supabase Realtime WebSocket (peer-to-peer broadcast, no dedicated sync server).
+  On join it requests peers' state and offers its own; both are idempotent CRDT
+  merges. This was validated headlessly: two peers inserting at the same position
+  concurrently converge to identical text with no lost edits.
+- **Persistence boundary.** The durable store stays TipTap JSON in Postgres
+  (autosaved by editors). A live session seeds the shared `Y.Doc` from the last
+  save via a single elected seeder, and the editor mounts after a brief sync
+  window so a late joiner binds to already-synced content. The Yjs state itself is
+  not yet persisted server-side — doing so (a `bytea` column) is the next step and
+  would add durable history and offline edits.
 
 ## AI writing assist
 
@@ -163,9 +170,9 @@ the editor; Tailwind provides a clean, Docs-like layout.
 
 ## What I deprioritized and why
 
-- **Conflict-free co-editing (CRDT/OT):** real-time presence, cursors, and live
-  content sync are shipped, but a conflict-free merge layer is the single biggest
-  effort sink — it needs CRDT/OT machinery that would consume the whole timebox
-  and still be fragile. Last-write-wins on persist is an acceptable interim.
+- **Server-side persistence of the CRDT state:** conflict-free concurrent editing
+  is shipped, but the durable store is TipTap JSON, not the Yjs binary state.
+  Persisting the latter (for durable history/offline) was deferred to keep the
+  backend schema simple.
 - **Comments, folders, search, org roles:** breadth that would dilute depth. The
   assignment explicitly rewards deliberate scope cuts.

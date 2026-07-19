@@ -7,7 +7,7 @@ persistence.
 
 - **Frontend:** React + Vite + TypeScript + Tailwind, TipTap editor
 - **Backend:** Python + FastAPI (all authorization and file parsing)
-- **Data/Auth:** Supabase (Postgres + Google/email auth)
+- **Data/Auth:** Supabase (Postgres + email/password auth)
 
 > **Live demo:** https://aniruddh1210.github.io/ajaia-collab-docs/
 > **API:** https://ajaia-docs-api-7i56.onrender.com (Render free tier — the first
@@ -17,10 +17,7 @@ persistence.
 
 ## What it does
 
-- **Email/password sign-in** (works on the live site; two reviewer accounts are
-  seeded). A "Continue with Google" button is wired up too, but Google OAuth
-  requires a browser-only Google Cloud + Supabase dashboard step that isn't
-  configured on the live deployment — use email/password to review.
+- **Email/password sign-in** (Supabase Auth); two reviewer accounts are seeded.
 - **Create, rename, edit, and delete** documents in the browser
 - **Rich text:** bold, italic, underline, H1–H3, bullet/numbered lists,
   blockquotes — via a TipTap toolbar
@@ -30,9 +27,10 @@ persistence.
 - **Sharing:** share a document with another user by email as **viewer**
   (read-only) or **editor** (can edit); owned vs. shared documents are visually
   separated on the dashboard
-- **Real-time collaboration:** Supabase Realtime keeps people in the same
-  document in sync — live content/title updates, presence avatars of who's
-  viewing, and live remote cursors (no polling)
+- **Real-time concurrent editing (CRDT):** the editor is backed by **Yjs**, synced
+  over the Supabase Realtime WebSocket, so two or more people can edit the same
+  document simultaneously and their changes **merge conflict-free** — plus live
+  named cursors and presence avatars of who's in the document
 - **AI writing assist (Gemini):** an **✨ AI** menu in the editor toolbar. Over a
   text selection: *Improve writing, Fix spelling & grammar, Make shorter/longer,
   Professional/Casual tone,* or a free-form *Custom instruction*. Over the whole
@@ -52,7 +50,7 @@ the editor supports.
 
 ## Test accounts (for reviewers)
 
-Two seeded accounts let you test the sharing flow without Google login:
+Two seeded accounts let you test the sharing and live-collaboration flows:
 
 | Email | Password |
 |---|---|
@@ -96,8 +94,7 @@ rationale and tradeoffs.
 
 1. Create a project at [supabase.com](https://supabase.com).
 2. In the **SQL Editor**, run [`backend/migrations/001_init.sql`](./backend/migrations/001_init.sql).
-3. **Auth → Providers:** enable **Email** and **Google** (see
-   [Google OAuth setup](#google-oauth-setup) below).
+3. **Auth → Providers:** enable **Email** (email/password sign-in).
 4. Collect these values:
    - **Project URL** and **anon key** — Project Settings → API
    - **JWT secret** — Project Settings → API → JWT Settings
@@ -159,26 +156,6 @@ VITE_API_URL=http://localhost:8000
 
 Open http://localhost:5173.
 
-**Optional — run with no Supabase at all (local dev-auth):** start the backend
-without `SUPABASE_URL` (defaults to a local SQLite file, tables auto-created),
-and build/run the frontend with `VITE_DEV_AUTH=true`. The login page then offers
-one-click demo sign-in that mints a local HS256 token accepted by the backend's
-fallback path. This mode is compiled out of production builds and is inert
-against the live JWKS-verifying backend.
-
----
-
-## Google OAuth setup
-
-1. In [Google Cloud Console](https://console.cloud.google.com/), create an OAuth
-   2.0 Client ID (Web application).
-2. Add authorized redirect URI:
-   `https://PROJECT.supabase.co/auth/v1/callback`.
-3. In Supabase **Auth → Providers → Google**, paste the client ID and secret.
-4. In Supabase **Auth → URL Configuration**, add your site URLs
-   (`http://localhost:5173` and your Vercel URL) to the redirect allow-list.
-
----
 
 ## Deployment
 
@@ -197,7 +174,7 @@ The live deployment uses **Render** (backend) + **GitHub Pages** (frontend):
 > The backend verifies Supabase's ES256 access tokens against the project's
 > public JWKS (`SUPABASE_URL/auth/v1/.well-known/jwks.json`) — no shared secret
 > needed. It falls back to an HS256 shared secret only when `SUPABASE_URL` is
-> unset (used by tests and the optional local dev-auth mode).
+> unset (used by the offline test suite).
 
 ---
 
@@ -206,9 +183,9 @@ The live deployment uses **Render** (backend) + **GitHub Pages** (frontend):
 To stay within the timebox, the following were intentionally **not** built (see
 [SUBMISSION.md](./SUBMISSION.md) for what's next):
 
-- Conflict-free co-editing (CRDT/OT) — real-time presence, live cursors, and
-  live content sync are shipped, but simultaneous edits to the *same region* are
-  last-write-wins on save; a CRDT/OT layer was the deliberate cut.
+- Server-side persistence of the CRDT (Yjs) state — concurrent editing works
+  live, but the durable store is TipTap JSON; persisting the Yjs doc would unlock
+  version history and offline edits (see [SUBMISSION.md](./SUBMISSION.md)).
 - Comments / suggestion mode
 - Folders, search, and document organization
 - Org/team-level permissions beyond per-document viewer/editor
