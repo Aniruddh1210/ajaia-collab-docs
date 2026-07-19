@@ -5,6 +5,8 @@ import Underline from "@tiptap/extension-underline";
 import Placeholder from "@tiptap/extension-placeholder";
 import type { JSONContent } from "@tiptap/react";
 import Toolbar from "./Toolbar";
+import { RemoteCursors, setRemoteCursors } from "./RemoteCursors";
+import type { RemoteCursor } from "../lib/collab";
 
 interface Props {
   content: Record<string, unknown> | null;
@@ -13,6 +15,8 @@ interface Props {
   // Live content pushed from another user via Realtime. Bumping `nonce`
   // triggers re-applying `data` into the editor.
   incoming?: { data: Record<string, unknown>; nonce: number } | null;
+  onSelectionChange?: (sel: { anchor: number; head: number }) => void;
+  remoteCursors?: { list: RemoteCursor[]; nonce: number };
 }
 
 export const editorExtensions = [
@@ -21,9 +25,16 @@ export const editorExtensions = [
   Placeholder.configure({ placeholder: "Start writing…" }),
 ];
 
-export default function Editor({ content, editable, onChange, incoming }: Props) {
+export default function Editor({
+  content,
+  editable,
+  onChange,
+  incoming,
+  onSelectionChange,
+  remoteCursors,
+}: Props) {
   const editor = useEditor({
-    extensions: editorExtensions,
+    extensions: [...editorExtensions, RemoteCursors],
     editable,
     content: (content as JSONContent) ?? { type: "doc", content: [] },
     editorProps: {
@@ -31,6 +42,10 @@ export default function Editor({ content, editable, onChange, incoming }: Props)
     },
     onUpdate: ({ editor }) => {
       onChange?.(editor.getJSON() as Record<string, unknown>);
+    },
+    onSelectionUpdate: ({ editor }) => {
+      const { anchor, head } = editor.state.selection;
+      onSelectionChange?.({ anchor, head });
     },
   });
 
@@ -48,6 +63,13 @@ export default function Editor({ content, editable, onChange, incoming }: Props)
     editor.commands.setContent(incoming.data as JSONContent, { emitUpdate: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [incoming?.nonce, editor]);
+
+  // Render other people's carets/selections.
+  useEffect(() => {
+    if (!editor || !remoteCursors) return;
+    setRemoteCursors(editor, remoteCursors.list);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [remoteCursors?.nonce, editor]);
 
   if (!editor) return null;
 

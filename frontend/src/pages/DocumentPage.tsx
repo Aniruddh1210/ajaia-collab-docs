@@ -5,6 +5,13 @@ import { api, ApiError } from "../lib/api";
 import { supabase } from "../lib/supabase";
 import { useAuth } from "../context/AuthContext";
 import type { DocumentDetail } from "../lib/types";
+import {
+  colorForId,
+  displayName,
+  initials,
+  type Peer,
+  type RemoteCursor,
+} from "../lib/collab";
 import Editor from "../components/Editor";
 import ShareDialog from "../components/ShareDialog";
 import ExportMenu from "../components/ExportMenu";
@@ -27,8 +34,17 @@ export default function DocumentPage() {
     data: Record<string, unknown>;
     nonce: number;
   } | null>(null);
+  const [peers, setPeers] = useState<Peer[]>([]);
+  const [remoteCursors, setRemoteCursors] = useState<{
+    list: RemoteCursor[];
+    nonce: number;
+  }>({ list: [], nonce: 0 });
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [showShare, setShowShare] = useState(false);
+
+  const myId = user?.id ?? "anon";
+  const myName = displayName(user);
+  const myColor = colorForId(myId);
 
   // Latest unsaved payload + debounce timer, kept in refs to avoid stale closures.
   const pending = useRef<{ title?: string; content?: Record<string, unknown> }>({});
@@ -39,30 +55,91 @@ export default function DocumentPage() {
   const bcastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const bcastLatest = useRef<{ content?: Record<string, unknown>; title?: string }>({});
   const titleRef = useRef<HTMLInputElement | null>(null);
+  const cursors = useRef<Map<string, RemoteCursor>>(new Map());
+  const cursorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cursorLatest = useRef<{ anchor: number; head: number }>({ anchor: 0, head: 0 });
 
   // Subscribe to this document's live channel; apply updates from other users.
   useEffect(() => {
     if (!id) return;
+    cursors.current.clear();
     const channel = supabase.channel(`doc:${id}`, {
-      config: { broadcast: { self: false } },
+      config: { broadcast: { self: false }, presence: { key: myId } },
     });
+
     channel.on("broadcast", { event: "update" }, ({ payload }) => {
-      if (!payload || payload.sender === user?.id) return;
-      if (payload.content) {
-        setIncoming({ data: payload.content, nonce: Date.now() });
-      }
+      if (!payload || payload.sender === myId) return;
+      if (payload.content) setIncoming({ data: payload.content, nonce: Date.now() });
       if (typeof payload.title === "string") {
-        // Don't yank the title box out from under a user typing in it.
         if (document.activeElement !== titleRef.current) setTitle(payload.title);
       }
     });
-    channel.subscribe();
+
+    channel.on("broadcast", { event: "cursor" }, ({ payload }) => {
+      if (!payload || payload.userId === myId) return;
+      cursors.current.set(payload.userId, payload as RemoteCursor);
+      setRemoteCursors({ list: [...cursors.current.values()], nonce: Date.now() });
+    });
+
+    channel.on("presence", { event: "sync" }, () => {
+      const state = channel.presenceState() as Record<string, Array<Peer>>;
+      const present = new Set<string>();
+      const list: Peer[] = [];
+      for (const arr of Object.values(state)) {
+        for (const p of arr) {
+          if (p.userId && p.userId !== myId) {
+            present.add(p.userId);
+            if (!list.find((x) => x.userId === p.userId)) list.push(p);
+          }
+        }
+      }
+      setPeers(list);
+      // Drop carets for people who have left.
+      let changed = false;
+      for (const k of [...cursors.current.keys()]) {
+        if (!present.has(k)) {
+          cursors.current.delete(k);
+          changed = true;
+        }
+      }
+      if (changed)
+        setRemoteCursors({ list: [...cursors.current.values()], nonce: Date.now() });
+    });
+
+    channel.subscribe((s) => {
+      if (s === "SUBSCRIBED") {
+        channel.track({ userId: myId, name: myName, color: myColor });
+      }
+    });
     channelRef.current = channel;
     return () => {
       supabase.removeChannel(channel);
       channelRef.current = null;
     };
-  }, [id, user?.id]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, myId]);
+
+  // Broadcast our caret position (throttled) so others can see where we are.
+  const broadcastCursor = useCallback(
+    (sel: { anchor: number; head: number }) => {
+      cursorLatest.current = sel;
+      if (cursorTimer.current) return;
+      cursorTimer.current = setTimeout(() => {
+        cursorTimer.current = null;
+        channelRef.current?.send({
+          type: "broadcast",
+          event: "cursor",
+          payload: {
+            userId: myId,
+            name: myName,
+            color: myColor,
+            ...cursorLatest.current,
+          },
+        });
+      }, 80);
+    },
+    [myId, myName, myColor]
+  );
 
   // Throttle outgoing broadcasts to at most one every ~200ms, always latest.
   const broadcast = useCallback(
@@ -217,6 +294,7 @@ export default function DocumentPage() {
             className="w-full max-w-md rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium hover:border-gray-200 focus:border-brand-500 focus:outline-none disabled:bg-transparent dark:hover:border-gray-700"
           />
           <SaveBadge state={saveState} canEdit={canEdit} />
+          <PresenceAvatars peers={peers} />
           {liveContent && <ExportMenu title={title} content={liveContent} />}
         </div>
       </TopNav>
@@ -234,6 +312,8 @@ export default function DocumentPage() {
               editable={canEdit}
               onChange={canEdit ? onContentChange : undefined}
               incoming={incoming}
+              onSelectionChange={broadcastCursor}
+              remoteCursors={remoteCursors}
             />
           )}
         </div>
@@ -249,6 +329,29 @@ export default function DocumentPage() {
       )}
       {showShare && id && (
         <ShareDialog docId={id} onClose={() => setShowShare(false)} />
+      )}
+    </div>
+  );
+}
+
+function PresenceAvatars({ peers }: { peers: Peer[] }) {
+  if (peers.length === 0) return null;
+  return (
+    <div className="flex items-center -space-x-1.5" title="People viewing now">
+      {peers.slice(0, 4).map((p) => (
+        <div
+          key={p.userId}
+          title={p.name}
+          className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white text-[10px] font-semibold text-white dark:border-gray-900"
+          style={{ backgroundColor: p.color }}
+        >
+          {initials(p.name)}
+        </div>
+      ))}
+      {peers.length > 4 && (
+        <div className="flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-gray-400 text-[10px] font-semibold text-white dark:border-gray-900">
+          +{peers.length - 4}
+        </div>
       )}
     </div>
   );

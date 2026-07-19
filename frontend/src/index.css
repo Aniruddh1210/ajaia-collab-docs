@@ -46,3 +46,29 @@
   content: attr(data-placeholder);
   @apply text-gray-400 float-left h-0 pointer-events-none dark:text-gray-500;
 }
+
+/* Remote collaborators' carets and name labels */
+.remote-caret {
+  position: relative;
+  border-left: 2px solid;
+  margin-left: -1px;
+  pointer-events: none;
+  word-break: normal;
+}
+.remote-caret-label {
+  position: absolute;
+  top: -1.25rem;
+  left: -2px;
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+  border-radius: 4px;
+  padding: 2px 4px;
+  color: #fff;
+  font-weight: 600;
+  pointer-events: none;
+  user-select: none;
+}
+.remote-selection {
+  border-radius: 2px;
+}
