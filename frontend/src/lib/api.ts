@@ -1,4 +1,5 @@
 import { supabase } from "./supabase";
+import { DEV_AUTH, loadDevSession } from "./devAuth";
 import type {
   DocumentDetail,
   DocumentSummary,
@@ -18,6 +19,10 @@ export class ApiError extends Error {
 }
 
 async function authHeader(): Promise<Record<string, string>> {
+  if (DEV_AUTH) {
+    const token = loadDevSession()?.access_token;
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  }
   const {
     data: { session },
   } = await supabase.auth.getSession();

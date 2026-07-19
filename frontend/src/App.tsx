@@ -27,9 +27,12 @@ function RedirectIfAuthed({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+// On GitHub Pages the app is served from a repo subpath (import.meta.env.BASE_URL).
+const basename = import.meta.env.BASE_URL.replace(/\/$/, "");
+
 export default function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={basename}>
       <Routes>
         <Route
           path="/login"

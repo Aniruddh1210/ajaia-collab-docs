@@ -2,13 +2,30 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
+const DEMO_USERS = [
+  { email: "reviewer1@ajaia-demo.test", name: "Reviewer One" },
+  { email: "reviewer2@ajaia-demo.test", name: "Reviewer Two" },
+];
+
 export default function Login() {
-  const { signInWithGoogle, signInWithPassword, signUpWithPassword } = useAuth();
+  const { signInWithGoogle, signInWithPassword, signUpWithPassword, signInAsDev, devAuth } =
+    useAuth();
   const { notify } = useToast();
   const [mode, setMode] = useState<"signin" | "signup">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+
+  async function devSignIn(devEmail: string, name?: string) {
+    setBusy(true);
+    try {
+      await signInAsDev(devEmail, name);
+    } catch (err) {
+      notify(err instanceof Error ? err.message : "Dev sign-in failed", "error");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,6 +57,53 @@ export default function Login() {
           </p>
         </div>
 
+        {devAuth ? (
+          <div className="space-y-3">
+            <div className="rounded-lg bg-amber-50 px-3 py-2 text-center text-xs text-amber-700">
+              Local dev mode — no Supabase. Pick a demo user or enter any email.
+            </div>
+            {DEMO_USERS.map((u) => (
+              <button
+                key={u.email}
+                onClick={() => devSignIn(u.email, u.name)}
+                disabled={busy}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+              >
+                Sign in as {u.name}{" "}
+                <span className="text-gray-400">({u.email})</span>
+              </button>
+            ))}
+            <div className="my-4 flex items-center gap-3 text-xs text-gray-400">
+              <div className="h-px flex-1 bg-gray-200" />
+              or any email
+              <div className="h-px flex-1 bg-gray-200" />
+            </div>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (email) devSignIn(email);
+              }}
+              className="space-y-3"
+            >
+              <input
+                type="email"
+                required
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500"
+              />
+              <button
+                type="submit"
+                disabled={busy}
+                className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-brand-700 disabled:opacity-50"
+              >
+                {busy ? "Please wait…" : "Dev sign-in"}
+              </button>
+            </form>
+          </div>
+        ) : (
+          <>
         <button
           onClick={() => signInWithGoogle()}
           className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
@@ -107,6 +171,8 @@ export default function Login() {
             {mode === "signin" ? "Sign up" : "Sign in"}
           </button>
         </p>
+          </>
+        )}
       </div>
     </div>
   );
