@@ -10,6 +10,9 @@ interface Props {
   content: Record<string, unknown> | null;
   editable: boolean;
   onChange?: (json: Record<string, unknown>) => void;
+  // Live content pushed from another user via Realtime. Bumping `nonce`
+  // triggers re-applying `data` into the editor.
+  incoming?: { data: Record<string, unknown>; nonce: number } | null;
 }
 
 export const editorExtensions = [
@@ -18,7 +21,7 @@ export const editorExtensions = [
   Placeholder.configure({ placeholder: "Start writing…" }),
 ];
 
-export default function Editor({ content, editable, onChange }: Props) {
+export default function Editor({ content, editable, onChange, incoming }: Props) {
   const editor = useEditor({
     extensions: editorExtensions,
     editable,
@@ -34,6 +37,17 @@ export default function Editor({ content, editable, onChange }: Props) {
   useEffect(() => {
     editor?.setEditable(editable);
   }, [editable, editor]);
+
+  // Apply a remote update. Viewers always get it live; an editor gets it only
+  // while they're not actively typing, so their cursor isn't yanked away.
+  useEffect(() => {
+    if (!editor || !incoming) return;
+    if (editable && editor.isFocused) return;
+    const current = JSON.stringify(editor.getJSON());
+    if (current === JSON.stringify(incoming.data)) return;
+    editor.commands.setContent(incoming.data as JSONContent, { emitUpdate: false });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [incoming?.nonce, editor]);
 
   if (!editor) return null;
 

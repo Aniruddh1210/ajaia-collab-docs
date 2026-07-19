@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 import { api, ApiError } from "../lib/api";
+import { supabase } from "../lib/supabase";
+import { useAuth } from "../context/AuthContext";
 import type { DocumentDetail } from "../lib/types";
 import Editor from "../components/Editor";
 import ShareDialog from "../components/ShareDialog";
@@ -14,17 +17,69 @@ export default function DocumentPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { notify } = useToast();
+  const { user } = useAuth();
 
   const [doc, setDoc] = useState<DocumentDetail | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "notfound">("loading");
   const [title, setTitle] = useState("");
   const [liveContent, setLiveContent] = useState<Record<string, unknown> | null>(null);
+  const [incoming, setIncoming] = useState<{
+    data: Record<string, unknown>;
+    nonce: number;
+  } | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [showShare, setShowShare] = useState(false);
 
   // Latest unsaved payload + debounce timer, kept in refs to avoid stale closures.
   const pending = useRef<{ title?: string; content?: Record<string, unknown> }>({});
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Realtime channel for live updates, plus a light broadcast throttle.
+  const channelRef = useRef<RealtimeChannel | null>(null);
+  const bcastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bcastLatest = useRef<{ content?: Record<string, unknown>; title?: string }>({});
+  const titleRef = useRef<HTMLInputElement | null>(null);
+
+  // Subscribe to this document's live channel; apply updates from other users.
+  useEffect(() => {
+    if (!id) return;
+    const channel = supabase.channel(`doc:${id}`, {
+      config: { broadcast: { self: false } },
+    });
+    channel.on("broadcast", { event: "update" }, ({ payload }) => {
+      if (!payload || payload.sender === user?.id) return;
+      if (payload.content) {
+        setIncoming({ data: payload.content, nonce: Date.now() });
+      }
+      if (typeof payload.title === "string") {
+        // Don't yank the title box out from under a user typing in it.
+        if (document.activeElement !== titleRef.current) setTitle(payload.title);
+      }
+    });
+    channel.subscribe();
+    channelRef.current = channel;
+    return () => {
+      supabase.removeChannel(channel);
+      channelRef.current = null;
+    };
+  }, [id, user?.id]);
+
+  // Throttle outgoing broadcasts to at most one every ~200ms, always latest.
+  const broadcast = useCallback(
+    (patch: { content?: Record<string, unknown>; title?: string }) => {
+      bcastLatest.current = { ...bcastLatest.current, ...patch };
+      if (bcastTimer.current) return;
+      bcastTimer.current = setTimeout(() => {
+        bcastTimer.current = null;
+        channelRef.current?.send({
+          type: "broadcast",
+          event: "update",
+          payload: { sender: user?.id, ...bcastLatest.current },
+        });
+      }, 200);
+    },
+    [user?.id]
+  );
 
   useEffect(() => {
     let active = true;
@@ -97,6 +152,7 @@ export default function DocumentPage() {
     pending.current.title = value;
     setSaveState("saving");
     queueSave();
+    broadcast({ title: value });
   }
 
   function onContentChange(json: Record<string, unknown>) {
@@ -104,6 +160,7 @@ export default function DocumentPage() {
     setLiveContent(json);
     setSaveState("saving");
     queueSave();
+    broadcast({ content: json });
   }
 
   if (status === "loading") {
@@ -151,6 +208,7 @@ export default function DocumentPage() {
             ←
           </button>
           <input
+            ref={titleRef}
             value={title}
             onChange={(e) => onTitleChange(e.target.value)}
             disabled={!canEdit}
@@ -175,6 +233,7 @@ export default function DocumentPage() {
               content={doc.content}
               editable={canEdit}
               onChange={canEdit ? onContentChange : undefined}
+              incoming={incoming}
             />
           )}
         </div>
