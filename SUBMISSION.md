@@ -58,8 +58,11 @@ share with `reviewer2@ajaiadocs.app`. In an incognito window, sign in as
 - **Real-time collaboration** via Supabase Realtime (broadcast + presence): live
   content/title sync between people in the same document, presence avatars of who
   else is viewing, and live remote cursors/selections — no polling
-- **AI writing assist:** signed-in users can run fixed AI actions over selected
-  text (server-side Gemini key), so no reviewer key is required
+- **AI writing assist (Gemini):** an **✨ AI** menu offering selection actions
+  (improve, fix grammar, shorten, lengthen, professional/casual tone, custom
+  instruction) and whole-document actions (summarize, continue writing). Results
+  preview with Accept / Discard / Regenerate before touching the document. The
+  Gemini key is server-side only, so no reviewer key is required
 - Export to Markdown and print/Save-as-PDF
 - Error handling: toasts, empty/loading states, no-access page, network-failure
   save retry

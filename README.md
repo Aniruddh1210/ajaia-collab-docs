@@ -186,9 +186,9 @@ The live deployment uses **Render** (backend) + **GitHub Pages** (frontend):
 
 - **Backend (Render):** Docker web service from `backend/` (Dockerfile), root
   directory `backend`. Env vars: `DATABASE_URL` (Supabase transaction-pooler URL
-  with the `postgresql+asyncpg://` scheme), `SUPABASE_URL`, and `ALLOWED_ORIGINS`
-  (the frontend origin). The root [`render.yaml`](./render.yaml) is a ready
-  blueprint.
+  with the `postgresql+asyncpg://` scheme), `SUPABASE_URL`, `ALLOWED_ORIGINS`
+  (the frontend origin), and `GEMINI_API_KEY` (for AI features). The root
+  [`render.yaml`](./render.yaml) is a ready blueprint.
 - **Frontend (GitHub Pages):** built with `VITE_BASE=/<repo>/`,
   `VITE_API_URL` (Render URL), `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and
   published to the `gh-pages` branch. A `404.html` copy of `index.html` handles

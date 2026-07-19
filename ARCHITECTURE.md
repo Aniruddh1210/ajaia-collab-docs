@@ -112,6 +112,36 @@ truth). The remaining gap is conflict resolution: two people editing the *same
 region* simultaneously still resolve last-write-wins on persist — a CRDT/OT
 layer (e.g. Yjs) is the next step.
 
+## AI writing assist
+
+The editor has an **✨ AI** menu backed by Gemini. Three design choices matter:
+
+- **The key is server-side, always.** The browser never sees the Gemini key. The
+  frontend calls `POST /api/ai/assist` (JWT-authenticated like everything else)
+  and FastAPI (`services/ai.py`) makes the Gemini call. This keeps the secret out
+  of the client bundle and means reviewers need no key of their own.
+- **A closed set of actions, not free-form prompting.** The client can only pick
+  from nine fixed actions (`improve`, `fix`, `shorten`, `lengthen`,
+  `professional`, `casual`, `custom`, `summarize`, `continue`). Each maps to a
+  server-owned system instruction; the user's text is data, not the prompt. This
+  bounds behaviour and cost, and makes the feature easy to reason about. `custom`
+  still lets the user supply an instruction, but it's applied to their selection
+  under the same guardrails.
+- **Nothing changes the document until the user accepts.** Results render in a
+  preview with **Accept / Discard / Regenerate**. Selection actions replace the
+  original range; `summarize` inserts at the top; `continue` appends. The AI is a
+  suggestion engine, never an autonomous editor.
+
+**Model & latency.** Default model is `gemini-3-flash-preview` with
+`thinkingLevel: low` — a deliberate tradeoff: full thinking gave noticeably better
+prose but ~18s latency, while low thinking lands ~5–8s with quality that's still
+strong for editing tasks. The service caps input length, sets a bounded output
+budget, and **retries once** on transient upstream errors (5xx, and the empty-body
+404s these preview models occasionally return). Rate limits, safety blocks, and
+truncation map to clear 4xx/502 responses rather than surfacing raw provider
+errors. If no key is configured the endpoint returns 503 and the app is otherwise
+unaffected.
+
 ## Frontend structure
 
 Standard React SPA: `AuthContext` wraps Supabase auth and exposes the session; a

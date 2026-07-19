@@ -56,11 +56,26 @@ I did not accept AI output uncritically. Concrete examples from this build:
    re-queuing a failed autosave payload so a network blip doesn't silently drop
    edits.
 
+5. **Probed the AI provider before committing to it, instead of trusting the
+   happy path.** For the Gemini writing assistant I ran the API directly with the
+   provided key before writing a line of feature code. That surfaced three things
+   the "obvious" implementation would have gotten wrong: (a) the default
+   `gemini-2.0-flash` returns **429 with a free-tier limit of 0** on this key — so
+   I discovered which models the key can actually reach; (b) Gemini 3 models are
+   *thinking* models, and full thinking meant **~18s latency** — unacceptable
+   inline, so I settled on `thinkingLevel: low` (~5–8s) as a measured
+   quality/latency tradeoff rather than a guess; (c) the preview models
+   intermittently return **empty-body 404s**, which I handle with a single retry.
+   The `_extract_text` parser also had to skip thought-signature parts that carry
+   no text. None of this is visible from the docs — it came from testing the real
+   surface first.
+
 ## How I verified correctness, UX, and reliability
 
-- **Automated:** 15 pytest cases covering the full access-control matrix
-  (owner/editor/viewer/stranger) and import validation (type, size, sanitization),
-  run against the real ASGI app.
+- **Automated:** 24 pytest cases covering the full access-control matrix
+  (owner/editor/viewer/stranger), import validation (type, size, sanitization),
+  and the AI endpoint (with the Gemini call mocked at the network boundary so the
+  suite runs offline and deterministically), run against the real ASGI app.
 - **Live integration smoke test:** started the actual server and exercised
   create → rename → list → import → 415/404 error paths with `curl` and a
   hand-minted JWT — which is exactly what surfaced the missing-tables bug above.

@@ -47,28 +47,31 @@
   @apply text-gray-400 float-left h-0 pointer-events-none dark:text-gray-500;
 }
 
-/* Remote collaborators' carets and name labels */
-.remote-caret {
+/* Collaborators' live carets and name labels (Yjs awareness) */
+.collab-caret {
   position: relative;
-  border-left: 2px solid;
   margin-left: -1px;
-  pointer-events: none;
+  margin-right: -1px;
+  border-left: 2px solid;
+  border-right: 0;
   word-break: normal;
+  pointer-events: none;
 }
-.remote-caret-label {
+.collab-caret__label {
   position: absolute;
-  top: -1.25rem;
+  top: -1.35rem;
   left: -2px;
   font-size: 10px;
   line-height: 1;
   white-space: nowrap;
   border-radius: 4px;
-  padding: 2px 4px;
+  padding: 2px 5px;
   color: #fff;
   font-weight: 600;
   pointer-events: none;
   user-select: none;
 }
-.remote-selection {
+/* Yjs selection highlight for remote users */
+.ProseMirror .ProseMirror-yjs-selection {
   border-radius: 2px;
 }

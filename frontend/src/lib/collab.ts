@@ -6,11 +6,6 @@ export interface Peer {
   color: string;
 }
 
-export interface RemoteCursor extends Peer {
-  anchor: number;
-  head: number;
-}
-
 // Distinct, readable cursor colors.
 const PALETTE = [
   "#e6194B", "#3cb44b", "#f58231", "#4363d8", "#911eb4",
