@@ -8,13 +8,20 @@ import {
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
 
+/** Result of a sign-up attempt so the UI can react appropriately. */
+export interface SignUpResult {
+  /** True when a session was established immediately (email confirmation off). */
+  signedIn: boolean;
+  /** True when confirmation is required — the user must verify via email. */
+  needsConfirmation: boolean;
+}
+
 interface AuthState {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
   signInWithPassword: (email: string, password: string) => Promise<void>;
-  signUpWithPassword: (email: string, password: string) => Promise<void>;
+  signUpWithPassword: (email: string, password: string) => Promise<SignUpResult>;
   signOut: () => Promise<void>;
 }
 
@@ -39,22 +46,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     user: session?.user ?? null,
     loading,
-    signInWithGoogle: async () => {
-      // Return to this exact app URL (includes the GitHub Pages base path).
-      const redirectTo = window.location.origin + import.meta.env.BASE_URL;
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo },
-      });
-      if (error) throw error;
-    },
     signInWithPassword: async (email, password) => {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
     },
     signUpWithPassword: async (email, password) => {
-      const { error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({ email, password });
       if (error) throw error;
+
+      // When an email is already registered, Supabase (with confirmation on)
+      // returns a user with an empty identities array rather than an error.
+      if (data.user && data.user.identities && data.user.identities.length === 0) {
+        throw new Error("An account with this email already exists. Try signing in.");
+      }
+
+      // A session is present only when email confirmation is disabled; otherwise
+      // the user must confirm via the emailed link before they can sign in.
+      return {
+        signedIn: data.session != null,
+        needsConfirmation: data.session == null,
+      };
     },
     signOut: async () => {
       await supabase.auth.signOut();
