@@ -7,23 +7,14 @@ import {
 } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "../lib/supabase";
-import {
-  DEV_AUTH,
-  clearDevSession,
-  loadDevSession,
-  mintDevSession,
-  saveDevSession,
-} from "../lib/devAuth";
 
 interface AuthState {
   session: Session | null;
   user: User | null;
   loading: boolean;
-  devAuth: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithPassword: (email: string, password: string) => Promise<void>;
   signUpWithPassword: (email: string, password: string) => Promise<void>;
-  signInAsDev: (email: string, fullName?: string) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -34,13 +25,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (DEV_AUTH) {
-      // Local dev: restore any minted session from localStorage, no Supabase.
-      const dev = loadDevSession();
-      setSession(dev ? (dev as unknown as Session) : null);
-      setLoading(false);
-      return;
-    }
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
       setLoading(false);
@@ -55,12 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     user: session?.user ?? null,
     loading,
-    devAuth: DEV_AUTH,
-    signInAsDev: async (email, fullName) => {
-      const dev = await mintDevSession(email, fullName);
-      saveDevSession(dev);
-      setSession(dev as unknown as Session);
-    },
     signInWithGoogle: async () => {
       // Return to this exact app URL (includes the GitHub Pages base path).
       const redirectTo = window.location.origin + import.meta.env.BASE_URL;
@@ -79,11 +57,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (error) throw error;
     },
     signOut: async () => {
-      if (DEV_AUTH) {
-        clearDevSession();
-        setSession(null);
-        return;
-      }
       await supabase.auth.signOut();
     },
   };
