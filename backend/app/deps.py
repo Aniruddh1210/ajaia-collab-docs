@@ -48,7 +48,9 @@ def _decode_token(token: str) -> dict:
         )
     except jwt.ExpiredSignatureError:
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Token expired")
-    except jwt.InvalidTokenError:
+    except (jwt.InvalidTokenError, jwt.PyJWTError):
+        # PyJWTError covers PyJWKClientError (e.g. a token with no matching
+        # "kid"): treat any token we can't verify as unauthorized, never 500.
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid token")
 
 
