@@ -4,6 +4,7 @@ import { api, ApiError } from "../lib/api";
 import type { DocumentDetail } from "../lib/types";
 import Editor from "../components/Editor";
 import ShareDialog from "../components/ShareDialog";
+import ExportMenu from "../components/ExportMenu";
 import TopNav from "../components/TopNav";
 import { useToast } from "../context/ToastContext";
 
@@ -17,6 +18,7 @@ export default function DocumentPage() {
   const [doc, setDoc] = useState<DocumentDetail | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "notfound">("loading");
   const [title, setTitle] = useState("");
+  const [liveContent, setLiveContent] = useState<Record<string, unknown> | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [showShare, setShowShare] = useState(false);
 
@@ -33,6 +35,7 @@ export default function DocumentPage() {
         if (!active) return;
         setDoc(d);
         setTitle(d.title);
+        setLiveContent(d.content);
         setStatus("ready");
       })
       .catch((e) => {
@@ -98,6 +101,7 @@ export default function DocumentPage() {
 
   function onContentChange(json: Record<string, unknown>) {
     pending.current.content = json;
+    setLiveContent(json);
     setSaveState("saving");
     queueSave();
   }
@@ -155,6 +159,7 @@ export default function DocumentPage() {
             className="w-full max-w-md rounded border border-transparent px-2 py-1 text-sm font-medium hover:border-gray-200 focus:border-brand-500 focus:outline-none disabled:bg-transparent"
           />
           <SaveBadge state={saveState} canEdit={canEdit} />
+          {liveContent && <ExportMenu title={title} content={liveContent} />}
         </div>
       </TopNav>
 
