@@ -9,15 +9,18 @@ persistence.
 - **Backend:** Python + FastAPI (all authorization and file parsing)
 - **Data/Auth:** Supabase (Postgres + Google/email auth)
 
-> **Live demo:** _<add Vercel URL here>_
-> **API:** _<add Render URL here>_ (free tier — the first request after idle may
-> take ~30–60s to wake up)
+> **Live demo:** https://aniruddh1210.github.io/ajaia-collab-docs/
+> **API:** https://ajaia-docs-api-7i56.onrender.com (Render free tier — the first
+> request after idle may take ~30–60s to wake up)
 
 ---
 
 ## What it does
 
-- **Google sign-in** (plus email/password as a fallback for reviewers)
+- **Email/password sign-in** (works on the live site; two reviewer accounts are
+  seeded). A "Continue with Google" button is wired up too, but Google OAuth
+  requires a browser-only Google Cloud + Supabase dashboard step that isn't
+  configured on the live deployment — use email/password to review.
 - **Create, rename, edit, and delete** documents in the browser
 - **Rich text:** bold, italic, underline, H1–H3, bullet/numbered lists,
   blockquotes — via a TipTap toolbar
@@ -43,12 +46,12 @@ Two seeded accounts let you test the sharing flow without Google login:
 
 | Email | Password |
 |---|---|
-| `reviewer1@ajaia-demo.test` | _<add password>_ |
-| `reviewer2@ajaia-demo.test` | _<add password>_ |
+| `reviewer1@ajaiadocs.app` | `Reviewer!2026` |
+| `reviewer2@ajaiadocs.app` | `Reviewer!2026` |
 
-Sign in as `reviewer1`, create a document, click **Share**, and share it with
-`reviewer2@ajaia-demo.test`. Sign in as `reviewer2` (incognito window) to see it
-under **Shared with me**.
+Sign in as `reviewer1` (email/password), create a document, click **Share**, and
+share it with `reviewer2@ajaiadocs.app`. Sign in as `reviewer2` (incognito
+window) to see it under **Shared with me**.
 
 > Note: you can only share with a user who has signed in at least once (their
 > profile must exist). Both seeded accounts have already signed in.
@@ -139,6 +142,13 @@ VITE_API_URL=http://localhost:8000
 
 Open http://localhost:5173.
 
+**Optional — run with no Supabase at all (local dev-auth):** start the backend
+without `SUPABASE_URL` (defaults to a local SQLite file, tables auto-created),
+and build/run the frontend with `VITE_DEV_AUTH=true`. The login page then offers
+one-click demo sign-in that mints a local HS256 token accepted by the backend's
+fallback path. This mode is compiled out of production builds and is inert
+against the live JWKS-verifying backend.
+
 ---
 
 ## Google OAuth setup
@@ -155,13 +165,22 @@ Open http://localhost:5173.
 
 ## Deployment
 
-- **Backend (Render):** deploy `backend/` as a Docker web service (see
-  [`backend/render.yaml`](./backend/render.yaml)). Set `DATABASE_URL`,
-  `SUPABASE_JWT_SECRET`, and `ALLOWED_ORIGINS` (your Vercel URL).
-- **Frontend (Vercel):** import the repo, set the project root to `frontend/`,
-  and add `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and `VITE_API_URL`
-  (your Render URL). `vercel.json` handles SPA routing.
-- Update the Supabase redirect allow-list with the deployed frontend URL.
+The live deployment uses **Render** (backend) + **GitHub Pages** (frontend):
+
+- **Backend (Render):** Docker web service from `backend/` (Dockerfile), root
+  directory `backend`. Env vars: `DATABASE_URL` (Supabase transaction-pooler URL
+  with the `postgresql+asyncpg://` scheme), `SUPABASE_URL`, and `ALLOWED_ORIGINS`
+  (the frontend origin). The root [`render.yaml`](./render.yaml) is a ready
+  blueprint.
+- **Frontend (GitHub Pages):** built with `VITE_BASE=/<repo>/`,
+  `VITE_API_URL` (Render URL), `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, and
+  published to the `gh-pages` branch. A `404.html` copy of `index.html` handles
+  SPA deep links. (A Vercel path also works — `frontend/vercel.json` is included.)
+
+> The backend verifies Supabase's ES256 access tokens against the project's
+> public JWKS (`SUPABASE_URL/auth/v1/.well-known/jwks.json`) — no shared secret
+> needed. It falls back to an HS256 shared secret only when `SUPABASE_URL` is
+> unset (used by tests and the optional local dev-auth mode).
 
 ---
 

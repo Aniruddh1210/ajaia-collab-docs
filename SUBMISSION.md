@@ -18,21 +18,24 @@
 
 ## Links
 
-- **Live app (Vercel):** _<add URL>_
-- **API (Render):** _<add URL>_ — free tier; first request after idle may take
-  ~30–60s to wake up
+- **Live app (GitHub Pages):** https://aniruddh1210.github.io/ajaia-collab-docs/
+- **API (Render):** https://ajaia-docs-api-7i56.onrender.com — free tier; first
+  request after idle may take ~30–60s to wake up
 - **GitHub repo:** https://github.com/Aniruddh1210/ajaia-collab-docs
 - **Walkthrough video:** _<add Loom/YouTube URL>_ (also in `VIDEO.txt`)
 
 ## Reviewer credentials
 
+Sign in with **email/password** (Google login is wired but not configured on the
+live site — see README).
+
 | Email | Password |
 |---|---|
-| `reviewer1@ajaia-demo.test` | _<add>_ |
-| `reviewer2@ajaia-demo.test` | _<add>_ |
+| `reviewer1@ajaiadocs.app` | `Reviewer!2026` |
+| `reviewer2@ajaiadocs.app` | `Reviewer!2026` |
 
 To test sharing: sign in as `reviewer1`, create/open a document, click **Share**,
-share with `reviewer2@ajaia-demo.test`. In an incognito window, sign in as
+share with `reviewer2@ajaiadocs.app`. In an incognito window, sign in as
 `reviewer2` and open **Shared with me**.
 
 ---
