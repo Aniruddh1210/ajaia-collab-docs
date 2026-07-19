@@ -1,0 +1,9 @@
+.venv
+tests
+__pycache__
+*.db
+*.pyc
+.pytest_cache
+migrations
+Dockerfile
+render.yaml

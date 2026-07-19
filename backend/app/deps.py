@@ -1,5 +1,6 @@
 import uuid
 from dataclasses import dataclass
+from functools import lru_cache
 
 import jwt
 from fastapi import Depends, Header, HTTPException, status
@@ -21,8 +22,24 @@ class CurrentUser:
     avatar_url: str | None
 
 
+@lru_cache
+def _jwk_client() -> "jwt.PyJWKClient":
+    # Cached client fetches and caches the project's public signing keys.
+    return jwt.PyJWKClient(settings.jwks_url)
+
+
 def _decode_token(token: str) -> dict:
     try:
+        if settings.jwks_url:
+            # Modern Supabase: asymmetric ES256, verified against public JWKS.
+            signing_key = _jwk_client().get_signing_key_from_jwt(token)
+            return jwt.decode(
+                token,
+                signing_key.key,
+                algorithms=["ES256", "RS256"],
+                audience=settings.jwt_audience,
+            )
+        # Fallback: symmetric HS256 with a shared secret (tests / local dev).
         return jwt.decode(
             token,
             settings.supabase_jwt_secret,

@@ -2,15 +2,19 @@ from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.pool import NullPool
 
 from app.config import get_settings
 
 settings = get_settings()
 
-# For Postgres we keep a modest pool; SQLite (tests/dev) ignores pool args.
 engine_kwargs: dict = {"echo": False, "future": True}
 if settings.database_url.startswith("postgresql"):
-    engine_kwargs.update(pool_size=5, max_overflow=5, pool_pre_ping=True)
+    # We run on serverless behind Supabase's pgbouncer transaction pooler.
+    # NullPool: don't hold connections across invocations (pgbouncer pools for us).
+    # statement_cache_size=0: transaction-mode pgbouncer can't reuse prepared statements.
+    engine_kwargs["poolclass"] = NullPool
+    engine_kwargs["connect_args"] = {"statement_cache_size": 0}
 
 engine = create_async_engine(settings.database_url, **engine_kwargs)
 SessionLocal = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
