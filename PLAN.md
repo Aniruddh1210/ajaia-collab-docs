@@ -8,6 +8,15 @@ This document is a complete, self-contained spec. An engineer (or AI agent) shou
 
 ---
 
+## 0. Git Workflow (mandatory)
+
+- Repo: `https://github.com/Aniruddh1210/ajaia-collab-docs` (public), branch `main`, already initialized.
+- **Commit after every working unit** — roughly one commit per numbered task in the phase lists below (e.g. "Add FastAPI skeleton with JWT auth dependency", "Add documents CRUD endpoints", "Add TipTap editor with toolbar"). Small, coherent, imperative-mood messages.
+- **Push after every commit** (`git push`). The commit history is part of the submission story — reviewers should be able to see incremental, disciplined progress.
+- Never commit secrets: `.env` files are gitignored; commit `.env.example` files with placeholder keys instead.
+
+---
+
 ## 1. Product Summary
 
 A lightweight Google-Docs-inspired collaborative editor:
