@@ -111,8 +111,8 @@ export default function DocumentPage() {
       <div className="min-h-screen">
         <TopNav />
         <div className="mx-auto mt-16 max-w-3xl px-4">
-          <div className="h-10 w-1/2 animate-pulse rounded bg-gray-200" />
-          <div className="mt-6 h-96 animate-pulse rounded-xl bg-white" />
+          <div className="h-10 w-1/2 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+          <div className="mt-6 h-96 animate-pulse rounded-xl bg-white dark:bg-gray-900" />
         </div>
       </div>
     );
@@ -125,7 +125,7 @@ export default function DocumentPage() {
         <div className="mx-auto mt-24 max-w-md px-4 text-center">
           <div className="text-5xl">🔒</div>
           <h1 className="mt-4 text-xl font-semibold">Document not available</h1>
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
             It may not exist, or it hasn't been shared with your account.
           </p>
           <Link
@@ -145,7 +145,7 @@ export default function DocumentPage() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate("/")}
-            className="rounded p-1 text-gray-500 hover:bg-gray-100"
+            className="rounded p-1 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
             title="Back to documents"
           >
             ←
@@ -156,7 +156,7 @@ export default function DocumentPage() {
             disabled={!canEdit}
             maxLength={200}
             placeholder="Untitled document"
-            className="w-full max-w-md rounded border border-transparent px-2 py-1 text-sm font-medium hover:border-gray-200 focus:border-brand-500 focus:outline-none disabled:bg-transparent"
+            className="w-full max-w-md rounded border border-transparent bg-transparent px-2 py-1 text-sm font-medium hover:border-gray-200 focus:border-brand-500 focus:outline-none disabled:bg-transparent dark:hover:border-gray-700"
           />
           <SaveBadge state={saveState} canEdit={canEdit} />
           {liveContent && <ExportMenu title={title} content={liveContent} />}
@@ -165,11 +165,11 @@ export default function DocumentPage() {
 
       <main className="mx-auto max-w-3xl px-4 py-8">
         {!canEdit && (
-          <div className="mb-3 inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700">
+          <div className="mb-3 inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
             👁 View only — shared by {doc?.owner_email}
           </div>
         )}
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm">
+        <div className="rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
           {doc && (
             <Editor
               content={doc.content}

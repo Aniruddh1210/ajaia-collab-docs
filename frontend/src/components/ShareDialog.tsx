@@ -63,11 +63,11 @@ export default function ShareDialog({ docId, onClose }: Props) {
       onClick={onClose}
     >
       <div
-        className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl"
+        className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl dark:bg-gray-900 dark:ring-1 dark:ring-gray-800"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-lg font-semibold">Share document</h2>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
           Share with another user by their account email. They must have signed in
           at least once.
         </p>
@@ -79,12 +79,12 @@ export default function ShareDialog({ docId, onClose }: Props) {
             placeholder="teammate@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500"
+            className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:placeholder-gray-500"
           />
           <select
             value={role}
             onChange={(e) => setRole(e.target.value as Role)}
-            className="rounded-lg border border-gray-300 px-2 py-2 text-sm outline-none focus:border-brand-500"
+            className="rounded-lg border border-gray-300 px-2 py-2 text-sm outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100"
           >
             <option value="editor">Editor</option>
             <option value="viewer">Viewer</option>
@@ -99,24 +99,24 @@ export default function ShareDialog({ docId, onClose }: Props) {
         </form>
 
         <div className="mt-5">
-          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
             People with access
           </h3>
           {loading ? (
-            <p className="text-sm text-gray-400">Loading…</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">Loading…</p>
           ) : shares.length === 0 ? (
-            <p className="text-sm text-gray-400">Not shared with anyone yet.</p>
+            <p className="text-sm text-gray-400 dark:text-gray-500">Not shared with anyone yet.</p>
           ) : (
-            <ul className="divide-y divide-gray-100">
+            <ul className="divide-y divide-gray-100 dark:divide-gray-800">
               {shares.map((s) => (
                 <li key={s.id} className="flex items-center justify-between py-2">
                   <div className="min-w-0">
-                    <p className="truncate text-sm text-gray-800">{s.email}</p>
-                    <p className="text-xs capitalize text-gray-400">{s.role}</p>
+                    <p className="truncate text-sm text-gray-800 dark:text-gray-200">{s.email}</p>
+                    <p className="text-xs capitalize text-gray-400 dark:text-gray-500">{s.role}</p>
                   </div>
                   <button
                     onClick={() => revoke(s)}
-                    className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+                    className="rounded px-2 py-1 text-xs text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/15"
                   >
                     Remove
                   </button>
@@ -129,7 +129,7 @@ export default function ShareDialog({ docId, onClose }: Props) {
         <div className="mt-6 text-right">
           <button
             onClick={onClose}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800"
           >
             Done
           </button>

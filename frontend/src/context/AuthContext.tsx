@@ -62,10 +62,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(dev as unknown as Session);
     },
     signInWithGoogle: async () => {
-      await supabase.auth.signInWithOAuth({
+      // Return to this exact app URL (includes the GitHub Pages base path).
+      const redirectTo = window.location.origin + import.meta.env.BASE_URL;
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo: window.location.origin },
+        options: { redirectTo },
       });
+      if (error) throw error;
     },
     signInWithPassword: async (email, password) => {
       const { error } = await supabase.auth.signInWithPassword({ email, password });

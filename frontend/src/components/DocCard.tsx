@@ -18,24 +18,24 @@ interface Props {
 export default function DocCard({ doc, onDelete }: Props) {
   const shared = doc.access !== "owner";
   return (
-    <div className="group relative flex flex-col rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md">
+    <div className="group relative flex flex-col rounded-xl border border-gray-200 bg-white p-4 shadow-sm transition hover:shadow-md dark:border-gray-800 dark:bg-gray-900 dark:hover:border-gray-700">
       <Link to={`/doc/${doc.id}`} className="flex-1">
-        <div className="mb-3 flex h-24 items-center justify-center rounded-lg bg-gray-50 text-4xl">
+        <div className="mb-3 flex h-24 items-center justify-center rounded-lg bg-gray-50 text-4xl dark:bg-gray-800">
           📄
         </div>
-        <h3 className="truncate font-medium text-gray-900" title={doc.title}>
+        <h3 className="truncate font-medium text-gray-900 dark:text-gray-100" title={doc.title}>
           {doc.title || "Untitled document"}
         </h3>
-        <p className="mt-1 text-xs text-gray-500">Edited {timeAgo(doc.updated_at)}</p>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Edited {timeAgo(doc.updated_at)}</p>
       </Link>
 
       <div className="mt-3 flex items-center justify-between">
         {shared ? (
-          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-500/20 dark:text-amber-300">
             Shared · {doc.access}
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700">
+          <span className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-500/20 dark:text-brand-200">
             Owned
           </span>
         )}
@@ -43,14 +43,14 @@ export default function DocCard({ doc, onDelete }: Props) {
           <button
             onClick={() => onDelete(doc)}
             title="Delete document"
-            className="rounded p-1 text-gray-400 opacity-0 transition hover:bg-red-50 hover:text-red-600 group-hover:opacity-100"
+            className="rounded p-1 text-gray-400 opacity-0 transition hover:bg-red-50 hover:text-red-600 group-hover:opacity-100 dark:hover:bg-red-500/20 dark:hover:text-red-400"
           >
             🗑
           </button>
         )}
       </div>
       {shared && (
-        <p className="mt-1 truncate text-xs text-gray-400" title={doc.owner_email}>
+        <p className="mt-1 truncate text-xs text-gray-400 dark:text-gray-500" title={doc.owner_email}>
           by {doc.owner_email}
         </p>
       )}

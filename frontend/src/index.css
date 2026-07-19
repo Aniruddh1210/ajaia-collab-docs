@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-gray-100 text-gray-900 antialiased;
+    @apply bg-gray-100 text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100;
   }
 }
 
@@ -31,10 +31,10 @@
   @apply list-decimal pl-6 my-2;
 }
 .ProseMirror blockquote {
-  @apply border-l-4 border-gray-300 pl-4 italic text-gray-600 my-3;
+  @apply border-l-4 border-gray-300 pl-4 italic text-gray-600 my-3 dark:border-gray-600 dark:text-gray-300;
 }
 .ProseMirror code {
-  @apply bg-gray-100 rounded px-1 py-0.5 text-sm font-mono;
+  @apply bg-gray-100 rounded px-1 py-0.5 text-sm font-mono dark:bg-gray-800;
 }
 .ProseMirror pre {
   @apply bg-gray-900 text-gray-100 rounded-md p-3 my-3 overflow-x-auto;
@@ -44,5 +44,5 @@
 }
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
-  @apply text-gray-400 float-left h-0 pointer-events-none;
+  @apply text-gray-400 float-left h-0 pointer-events-none dark:text-gray-500;
 }

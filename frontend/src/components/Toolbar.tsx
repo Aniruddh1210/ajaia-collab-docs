@@ -78,10 +78,10 @@ export default function Toolbar({ editor }: Props) {
   ];
 
   return (
-    <div className="sticky top-0 z-10 flex flex-wrap items-center gap-1 border-b border-gray-200 bg-white px-3 py-2">
+    <div className="sticky top-0 z-10 flex flex-wrap items-center gap-1 border-b border-gray-200 bg-white px-3 py-2 dark:border-gray-800 dark:bg-gray-900">
       {buttons.map((b, i) =>
         b === "divider" ? (
-          <span key={i} className="mx-1 h-5 w-px bg-gray-200" />
+          <span key={i} className="mx-1 h-5 w-px bg-gray-200 dark:bg-gray-700" />
         ) : (
           <button
             key={b.label}
@@ -92,8 +92,8 @@ export default function Toolbar({ editor }: Props) {
             className={
               "min-w-8 rounded px-2 py-1 text-sm font-medium transition " +
               (b.isActive()
-                ? "bg-brand-100 text-brand-700"
-                : "text-gray-700 hover:bg-gray-100")
+                ? "bg-brand-100 text-brand-700 dark:bg-brand-700 dark:text-brand-50"
+                : "text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800")
             }
           >
             {b.label === "B" ? <b>B</b> : b.label === "I" ? <i>I</i> : b.label === "U" ? <u>U</u> : b.label}

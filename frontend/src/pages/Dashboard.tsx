@@ -116,11 +116,11 @@ function Section({
   if (hideWhenEmpty && count === 0) return null;
   return (
     <section className="mb-10">
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-400">
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
         {title}
       </h2>
       {count === 0 ? (
-        <p className="rounded-xl border border-dashed border-gray-300 bg-white/50 p-8 text-center text-sm text-gray-400">
+        <p className="rounded-xl border border-dashed border-gray-300 bg-white/50 p-8 text-center text-sm text-gray-400 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-500">
           {empty}
         </p>
       ) : (
@@ -138,7 +138,7 @@ function SkeletonGrid() {
       {Array.from({ length: 8 }).map((_, i) => (
         <div
           key={i}
-          className="h-52 animate-pulse rounded-xl border border-gray-200 bg-white"
+          className="h-52 animate-pulse rounded-xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
         />
       ))}
     </div>

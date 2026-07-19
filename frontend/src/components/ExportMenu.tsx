@@ -62,7 +62,7 @@ export default function ExportMenu({ title, content }: Props) {
     <div className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100"
+        className="rounded-lg px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
         title="Export document"
       >
         ⬇ Export
@@ -70,16 +70,16 @@ export default function ExportMenu({ title, content }: Props) {
       {open && (
         <>
           <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-20 mt-1 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+          <div className="absolute right-0 z-20 mt-1 w-44 rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-800">
             <button
               onClick={exportMarkdown}
-              className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50"
+              className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               Download as Markdown
             </button>
             <button
               onClick={exportPdf}
-              className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50"
+              className="block w-full px-4 py-2 text-left text-sm hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               Print / Save as PDF
             </button>
