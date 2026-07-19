@@ -1,0 +1,19 @@
+# Render Blueprint — deploys the FastAPI backend as a Docker web service.
+# On render.com: New → Blueprint → connect this repo. Render reads this file.
+# Then set the three sync:false env vars (values provided separately).
+services:
+  - type: web
+    name: ajaia-docs-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    healthCheckPath: /healthz
+    plan: free
+    region: singapore
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
