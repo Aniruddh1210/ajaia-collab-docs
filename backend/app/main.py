@@ -1,16 +1,32 @@
 import logging
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from app.config import get_settings
+from app.db import Base, engine
 from app.routers import documents, imports, shares
 
 logger = logging.getLogger("ajaia")
 settings = get_settings()
 
-app = FastAPI(title="Ajaia Collaborative Docs API", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Convenience for local SQLite dev: create tables automatically.
+    # On Postgres/Supabase the schema is managed by migrations/001_init.sql,
+    # so we don't auto-create there.
+    if settings.database_url.startswith("sqlite"):
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+    yield
+
+
+app = FastAPI(
+    title="Ajaia Collaborative Docs API", version="1.0.0", lifespan=lifespan
+)
 
 app.add_middleware(
     CORSMiddleware,
